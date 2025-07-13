@@ -19,8 +19,7 @@ $apps = @(
     "RedHat.Podman",
     "Python.Python.3.12",
     "Unigine.HeavenBenchmark",
-    "Git.Git",
-    "containers.podman"  # Add this for Podman CLI if needed
+    "Git.Git"
 )
 
 foreach ($app in $apps) {
@@ -37,6 +36,41 @@ foreach ($app in $apps) {
     }
 }
 
+# --- Install LibreHardwareMonitor via Winget ---
+$appId = "LibreHardwareMonitor.LibreHardwareMonitor"
+$isInstalled = winget list --id $appId -e | Where-Object { $_ -match $appId }
+
+if ($isInstalled) {
+    Write-Host "$appId is already installed." -ForegroundColor Yellow
+} else {
+    Write-Host "Installing $appId..." -ForegroundColor Cyan
+    try {
+        winget install --id $appId -e --accept-source-agreements --accept-package-agreements
+    } catch {
+        Write-Host "❌ Failed to install $appId." -ForegroundColor Red
+    }
+}
+
+# --- Add LibreHardwareMonitor to Startup ---
+$lhmPath = "$Env:ProgramFiles\LibreHardwareMonitor\LibreHardwareMonitor.exe"
+if (Test-Path $lhmPath) {
+    Write-Host "Adding LibreHardwareMonitor to startup..." -ForegroundColor Cyan
+    $WScriptShell = New-Object -ComObject WScript.Shell
+    $Shortcut = $WScriptShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\LibreHardwareMonitor.lnk")
+    $Shortcut.TargetPath = $lhmPath
+    $Shortcut.Arguments = "--minimized"
+    $Shortcut.Save()
+}
+
+# --- Create shortcut if OpenRGB is installed ---
+$openrgb = "$Env:ProgramFiles\OpenRGB\OpenRGB.exe"
+if (Test-Path $openrgb) {
+    $WScriptShell = New-Object -ComObject WScript.Shell
+    $Shortcut = $WScriptShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\OpenRGB.lnk")
+    $Shortcut.TargetPath = $openrgb
+    $Shortcut.Save()
+}
+
 # --- Configure Git and Sync Dotfiles ---
 $dotfilesDir = "$HOME\.dotfiles"
 if (-Not (Test-Path $dotfilesDir)) {
@@ -51,42 +85,6 @@ Write-Host "Setting global Git config..." -ForegroundColor Cyan
 git config --global user.name "Abhijeet Tilekar"
 git config --global user.email "you@example.com"
 git config --global core.editor "nvim"
-
-# --- Install LibreHardwareMonitor ---
-$lhmRepo = "https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases/download/v0.9.4/LibreHardwareMonitor.zip"
-$lhmDest = "$env:ProgramFiles\LibreHardwareMonitor"
-$lhmZip = "$env:TEMP\LibreHardwareMonitor.zip"
-
-if (-Not (Test-Path "$lhmDest\LibreHardwareMonitor.exe")) {
-    Write-Host "Downloading LibreHardwareMonitor..." -ForegroundColor Cyan
-    try {
-        Invoke-WebRequest -Uri $lhmRepo -OutFile $lhmZip -ErrorAction Stop
-        Write-Host "Extracting LibreHardwareMonitor..." -ForegroundColor Cyan
-        Expand-Archive -Path $lhmZip -DestinationPath $lhmDest -Force
-    } catch {
-        Write-Host "❌ Failed to download LibreHardwareMonitor. Please check the URL or your connection." -ForegroundColor Red
-    }
-}
-
-# --- Add LibreHardwareMonitor to Startup ---
-$lhmExe = "$lhmDest\LibreHardwareMonitor.exe"
-if (Test-Path $lhmExe) {
-    Write-Host "Adding LibreHardwareMonitor to startup..." -ForegroundColor Cyan
-    $WScriptShell = New-Object -ComObject WScript.Shell
-    $Shortcut = $WScriptShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\LibreHardwareMonitor.lnk")
-    $Shortcut.TargetPath = $lhmExe
-    $Shortcut.Arguments = "--minimized"
-    $Shortcut.Save()
-}
-
-# --- Create shortcut if OpenRGB is installed ---
-$openrgb = "$Env:ProgramFiles\OpenRGB\OpenRGB.exe"
-if (Test-Path $openrgb) {
-    $WScriptShell = New-Object -ComObject WScript.Shell
-    $Shortcut = $WScriptShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\OpenRGB.lnk")
-    $Shortcut.TargetPath = $openrgb
-    $Shortcut.Save()
-}
 
 # --- Enable required features for WSL ---
 Write-Host "Enabling WSL-related features..." -ForegroundColor Cyan
