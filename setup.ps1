@@ -9,6 +9,7 @@ $apps = @(
     "Valve.Steam",
     "NVIDIA.App",
     "Mozilla.Firefox",
+    "Google.Chrome",
     "Bitwarden.Bitwarden",
     "Discord.Discord",
     "Microsoft.PowerToys",
@@ -21,24 +22,50 @@ $apps = @(
     "CoreyButler.NVMforWindows",
     "Python.Python.3",
     "MSI.Afterburner",
-    "Unigine.HeavenBenchmark"
+    "Unigine.HeavenBenchmark",
+    "Git.Git"
 )
 
 foreach ($app in $apps) {
-    Write-Host "Installing $app..." -ForegroundColor Cyan
-    winget install --id $app -e --accept-source-agreements --accept-package-agreements
+    $isInstalled = winget list --id $app -e | Where-Object { $_ -match $app }
+    if ($isInstalled) {
+        Write-Host "$app is already installed." -ForegroundColor Yellow
+    } else {
+        Write-Host "Installing $app..." -ForegroundColor Cyan
+        winget install --id $app -e --accept-source-agreements --accept-package-agreements
+    }
 }
 
+# --- Configure Git and Sync Dotfiles ---
+$dotfilesDir = "$HOME\.dotfiles"
+if (-Not (Test-Path $dotfilesDir)) {
+    Write-Host "Cloning dotfiles..." -ForegroundColor Cyan
+    git clone https://github.com/abhijeet8900/machine-setup $dotfilesDir
+} else {
+    Write-Host "Dotfiles already present at $dotfilesDir" -ForegroundColor Yellow
+}
+
+# Optional: configure global git settings
+Write-Host "Setting global Git config..." -ForegroundColor Cyan
+git config --global user.name "Abhijeet Tilekar"
+git config --global user.email "you@example.com"
+git config --global core.editor "nvim"
+
 # --- Install LibreHardwareMonitor ---
-$lhmRepo = "https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases/latest/download/LibreHardwareMonitor.zip"
+$lhmRepo = "https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases/download/v0.9.2/LibreHardwareMonitor.zip"
 $lhmDest = "$env:ProgramFiles\LibreHardwareMonitor"
 $lhmZip = "$env:TEMP\LibreHardwareMonitor.zip"
 
-Write-Host "Downloading LibreHardwareMonitor..." -ForegroundColor Cyan
-Invoke-WebRequest -Uri $lhmRepo -OutFile $lhmZip
-
-Write-Host "Extracting LibreHardwareMonitor..." -ForegroundColor Cyan
-Expand-Archive -Path $lhmZip -DestinationPath $lhmDest -Force
+if (-Not (Test-Path "$lhmDest\LibreHardwareMonitor.exe")) {
+    Write-Host "Downloading LibreHardwareMonitor..." -ForegroundColor Cyan
+    try {
+        Invoke-WebRequest -Uri $lhmRepo -OutFile $lhmZip -ErrorAction Stop
+        Write-Host "Extracting LibreHardwareMonitor..." -ForegroundColor Cyan
+        Expand-Archive -Path $lhmZip -DestinationPath $lhmDest -Force
+    } catch {
+        Write-Host "❌ Failed to download LibreHardwareMonitor. Please check the URL or your connection." -ForegroundColor Red
+    }
+}
 
 # --- Add LibreHardwareMonitor to Startup ---
 $lhmExe = "$lhmDest\LibreHardwareMonitor.exe"
