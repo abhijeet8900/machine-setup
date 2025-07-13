@@ -4,6 +4,18 @@
 # Run as Administrator
 # ============================
 
+$installResults = @{}
+
+# --- Define central dotfiles/config folder ---
+$dotfilesRoot = "$HOME\.dotfiles"
+$configRoot = "$HOME\.config"
+
+# Create config folder if not exists
+if (-not (Test-Path $configRoot)) {
+    New-Item -Path $configRoot -ItemType Directory | Out-Null
+    Write-Host "Created config directory at $configRoot" -ForegroundColor Cyan
+}
+
 # --- Apps via Winget ---
 $apps = @(
     "Valve.Steam",
@@ -19,19 +31,23 @@ $apps = @(
     "RedHat.Podman",
     "Python.Python.3.12",
     "Unigine.HeavenBenchmark",
-    "Git.Git"
+    "Git.Git",
+    "AutoHotkey.AutoHotkey"
 )
 
 foreach ($app in $apps) {
     $isInstalled = winget list --id $app -e | Where-Object { $_ -match $app }
     if ($isInstalled) {
         Write-Host "$app is already installed." -ForegroundColor Yellow
+        $installResults[$app] = "Already Installed"
     } else {
         Write-Host "Installing $app..." -ForegroundColor Cyan
         try {
             winget install --id $app -e --accept-source-agreements --accept-package-agreements
+            $installResults[$app] = "Installed"
         } catch {
             Write-Host "❌ Failed to install $app." -ForegroundColor Red
+            $installResults[$app] = "Failed"
         }
     }
 }
@@ -42,12 +58,15 @@ $isInstalled = winget list --id $appId -e | Where-Object { $_ -match $appId }
 
 if ($isInstalled) {
     Write-Host "$appId is already installed." -ForegroundColor Yellow
+    $installResults[$appId] = "Already Installed"
 } else {
     Write-Host "Installing $appId..." -ForegroundColor Cyan
     try {
         winget install --id $appId -e --accept-source-agreements --accept-package-agreements
+        $installResults[$appId] = "Installed"
     } catch {
         Write-Host "❌ Failed to install $appId." -ForegroundColor Red
+        $installResults[$appId] = "Failed"
     }
 }
 
@@ -72,15 +91,13 @@ if (Test-Path $openrgb) {
 }
 
 # --- Configure Git and Sync Dotfiles ---
-$dotfilesDir = "$HOME\.dotfiles"
-if (-Not (Test-Path $dotfilesDir)) {
+if (-Not (Test-Path $dotfilesRoot)) {
     Write-Host "Cloning dotfiles..." -ForegroundColor Cyan
-    git clone https://github.com/abhijeet8900/machine-setup $dotfilesDir
+    git clone https://github.com/abhijeet8900/machine-setup $dotfilesRoot
 } else {
-    Write-Host "Dotfiles already present at $dotfilesDir" -ForegroundColor Yellow
+    Write-Host "Dotfiles already present at $dotfilesRoot" -ForegroundColor Yellow
 }
 
-# Optional: configure global git settings
 Write-Host "Setting global Git config..." -ForegroundColor Cyan
 git config --global user.name "Abhijeet Tilekar"
 git config --global user.email "you@example.com"
@@ -91,9 +108,13 @@ Write-Host "Enabling WSL-related features..." -ForegroundColor Cyan
 Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
 Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
 
-# --- Enable WSL ---
-Write-Host "Installing WSL and Ubuntu..." -ForegroundColor Cyan
-wsl --install
+# --- Enable WSL if not already installed ---
+if ((wsl --status 2>&1) -match "The Windows Subsystem for Linux has no installed distributions") {
+    Write-Host "Installing WSL and Ubuntu..." -ForegroundColor Cyan
+    wsl --install
+} else {
+    Write-Host "WSL is already installed." -ForegroundColor Yellow
+}
 
 # --- Enable OpenSSH Server ---
 Write-Host "Installing OpenSSH Server..." -ForegroundColor Cyan
@@ -135,4 +156,10 @@ Reg Add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" 
 # Widgets (Windows Web Experience Pack)
 winget uninstall "Windows Web Experience Pack"
 
-Write-Host "✅ Setup Complete. Please restart your system to apply all changes." -ForegroundColor Green
+# --- Report Summary ---
+Write-Host "`n==== Installation Summary ====" -ForegroundColor Cyan
+foreach ($entry in $installResults.GetEnumerator()) {
+    Write-Host "$($entry.Key): $($entry.Value)"
+}
+
+Write-Host "`n✅ Setup Complete. Please restart your system to apply all changes." -ForegroundColor Green
