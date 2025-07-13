@@ -4,6 +4,27 @@
 # Run as Administrator
 # ============================
 
+# --- Fail fast on error ---
+$ErrorActionPreference = "Stop"
+
+# --- Ensure Admin Rights ---
+If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
+    [Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Error "❌ Please run this script as Administrator!"
+    Exit 1
+}
+
+# --- Optional UI Prompt ---
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName PresentationFramework
+
+$dialogResult = [System.Windows.Forms.MessageBox]::Show("This script will set up your Windows dev environment. Do you want to continue?", "Setup Confirmation", [System.Windows.Forms.MessageBoxButtons]::YesNo, [System.Windows.Forms.MessageBoxIcon]::Question)
+
+if ($dialogResult -ne [System.Windows.Forms.DialogResult]::Yes) {
+    Write-Host "Setup cancelled by user." -ForegroundColor Red
+    exit
+}
+
 $installResults = @{}
 
 # Track current phase to resume post-reboot
@@ -151,6 +172,15 @@ if ($phase -eq "phase2") {
 
     # Widgets (Windows Web Experience Pack)
     winget uninstall "Windows Web Experience Pack"
+
+    # --- Apply Registry Tweaks (Phase 3) ---
+    Write-Host "Applying registry tweaks and final settings..." -ForegroundColor Cyan
+
+    # Example tweak: show file extensions
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name HideFileExt -Value 0
+
+    # Example tweak: show hidden files
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name Hidden -Value 1
 
     # Cleanup
     Remove-Item $setupPhaseFile -Force -ErrorAction SilentlyContinue
