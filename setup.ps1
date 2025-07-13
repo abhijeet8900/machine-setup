@@ -13,16 +13,14 @@ $apps = @(
     "Discord.Discord",
     "Microsoft.PowerToys",
     "Piriform.CCleaner",
-    "Wez.WezTerm",
+    "wez.wezterm",
     "Microsoft.VisualStudioCode",
     "Neovim.Neovim",
     "RedHat.Podman",
-    "Podman.PodmanDesktop",
-    "CoreyButler.NVMforWindows",
-    "Python.Python.3",
-    "MSI.Afterburner",
+    "Python.Python.3.12",
     "Unigine.HeavenBenchmark",
-    "Git.Git"
+    "Git.Git",
+    "containers.podman"  # Add this for Podman CLI if needed
 )
 
 foreach ($app in $apps) {
@@ -31,7 +29,11 @@ foreach ($app in $apps) {
         Write-Host "$app is already installed." -ForegroundColor Yellow
     } else {
         Write-Host "Installing $app..." -ForegroundColor Cyan
-        winget install --id $app -e --accept-source-agreements --accept-package-agreements
+        try {
+            winget install --id $app -e --accept-source-agreements --accept-package-agreements
+        } catch {
+            Write-Host "❌ Failed to install $app." -ForegroundColor Red
+        }
     }
 }
 
@@ -51,7 +53,7 @@ git config --global user.email "you@example.com"
 git config --global core.editor "nvim"
 
 # --- Install LibreHardwareMonitor ---
-$lhmRepo = "https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases/download/v0.9.2/LibreHardwareMonitor.zip"
+$lhmRepo = "https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases/download/v0.9.4/LibreHardwareMonitor.zip"
 $lhmDest = "$env:ProgramFiles\LibreHardwareMonitor"
 $lhmZip = "$env:TEMP\LibreHardwareMonitor.zip"
 
