@@ -7,7 +7,6 @@
 # --- Apps via Winget ---
 $apps = @(
     "Valve.Steam",
-    "NVIDIA.App",
     "Mozilla.Firefox",
     "Google.Chrome",
     "Bitwarden.Bitwarden",
@@ -87,6 +86,11 @@ if (Test-Path $openrgb) {
     $Shortcut.Save()
 }
 
+# --- Enable required features for WSL ---
+Write-Host "Enabling WSL-related features..." -ForegroundColor Cyan
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
+Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
+
 # --- Enable WSL ---
 Write-Host "Installing WSL and Ubuntu..." -ForegroundColor Cyan
 wsl --install
@@ -129,6 +133,6 @@ Reg Add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v AllowTeleme
 Reg Add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-338388Enabled" /t REG_DWORD /d 0 /f
 
 # Widgets (Windows Web Experience Pack)
-winget uninstall "Windows Web Experience Pack" --silent --accept-source-agreements --accept-package-agreements
+winget uninstall "Windows Web Experience Pack"
 
 Write-Host "✅ Setup Complete. Please restart your system to apply all changes." -ForegroundColor Green
