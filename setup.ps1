@@ -111,6 +111,24 @@ if ($phase -eq "phase1") {
     git config --global user.email "you@example.com"
     git config --global core.editor "nvim"
 
+    # --- Setup symlinks for dotfiles ---
+    Write-Host "Linking dotfiles to user config..." -ForegroundColor Cyan
+    $dotConfigs = @(
+        @{ Source = "$dotfilesRoot\.bashrc"; Target = "$HOME\.bashrc" },
+        @{ Source = "$dotfilesRoot\.zshrc"; Target = "$HOME\.zshrc" },
+        @{ Source = "$dotfilesRoot\.gitconfig"; Target = "$HOME\.gitconfig" },
+        @{ Source = "$dotfilesRoot\nvim"; Target = "$configRoot\nvim" },
+        @{ Source = "$dotfilesRoot\wezterm"; Target = "$configRoot\wezterm" }
+    )
+
+    foreach ($link in $dotConfigs) {
+        if (-not (Test-Path $link.Target)) {
+            New-Item -ItemType SymbolicLink -Path $link.Target -Target $link.Source -Force
+        } else {
+            Write-Host "Skipped linking: $($link.Target) already exists." -ForegroundColor DarkGray
+        }
+    }
+
     # Proceed to Phase 2 after reboot
     "phase2" | Set-Content $setupPhaseFile
     Write-Host "🔁 Restarting system to continue setup..." -ForegroundColor Magenta
