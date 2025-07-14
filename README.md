@@ -35,3 +35,4 @@ machine-setup/
 `powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
 iwr -useb https://raw.githubusercontent.com/abhijeet8900/machine-setup/main/setup.ps1 | iex
+`
