@@ -114,18 +114,21 @@ if ($phase -eq "phase1") {
     # --- Setup symlinks for dotfiles ---
     Write-Host "Linking dotfiles to user config..." -ForegroundColor Cyan
     $dotConfigs = @(
-        @{ Source = "$dotfilesRoot\.bashrc"; Target = "$HOME\.bashrc" },
-        @{ Source = "$dotfilesRoot\.zshrc"; Target = "$HOME\.zshrc" },
         @{ Source = "$dotfilesRoot\.gitconfig"; Target = "$HOME\.gitconfig" },
         @{ Source = "$dotfilesRoot\nvim"; Target = "$configRoot\nvim" },
         @{ Source = "$dotfilesRoot\wezterm"; Target = "$configRoot\wezterm" }
     )
 
     foreach ($link in $dotConfigs) {
-        if (-not (Test-Path $link.Target)) {
-            New-Item -ItemType SymbolicLink -Path $link.Target -Target $link.Source -Force
+        if (Test-Path $link.Source) {
+            if (-not (Test-Path $link.Target)) {
+                Write-Host "Linking $($link.Source) → $($link.Target)" -ForegroundColor Green
+                New-Item -ItemType SymbolicLink -Path $link.Target -Target $link.Source -Force | Out-Null
+            } else {
+                Write-Host "Skipped linking: $($link.Target) already exists." -ForegroundColor DarkGray
+            }
         } else {
-            Write-Host "Skipped linking: $($link.Target) already exists." -ForegroundColor DarkGray
+            Write-Host "⚠️  Skipped: source not found at $($link.Source)" -ForegroundColor Yellow
         }
     }
 
