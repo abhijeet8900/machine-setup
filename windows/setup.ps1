@@ -55,6 +55,8 @@ if ($phase -eq "phase1") {
         "Neovim.Neovim",
         "RedHat.Podman",
         "Python.Python.3.12",
+        "OpenJS.NodeJS",
+        "Rustlang.Rustup",
         "Unigine.HeavenBenchmark",
         "Git.Git",
         "AutoHotkey.AutoHotkey",
@@ -110,6 +112,27 @@ if ($phase -eq "phase1") {
     git config --global user.name "Abhijeet Tilekar"
     git config --global user.email "you@example.com"
     git config --global core.editor "nvim"
+
+    # --- Install Rust toolchain ---
+    Write-Host "Setting up Rust toolchain..." -ForegroundColor Cyan
+    if (Get-Command rustup -ErrorAction SilentlyContinue) {
+        rustup default stable
+        rustup update
+        Write-Host "✅ Rust toolchain configured" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️ Rustup not found, it should be installed via winget" -ForegroundColor Yellow
+    }
+
+    # --- Verify Node.js and npm installation ---
+    Write-Host "Verifying Node.js and npm installation..." -ForegroundColor Cyan
+    if (Get-Command node -ErrorAction SilentlyContinue) {
+        $nodeVersion = node --version
+        Write-Host "✅ Node.js installed: $nodeVersion" -ForegroundColor Green
+    }
+    if (Get-Command npm -ErrorAction SilentlyContinue) {
+        $npmVersion = npm --version
+        Write-Host "✅ npm installed: $npmVersion" -ForegroundColor Green
+    }
 
     # --- Setup symlinks for dotfiles ---
     Write-Host "Linking dotfiles to user config..." -ForegroundColor Cyan

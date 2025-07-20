@@ -236,15 +236,48 @@ fi
 # --- Setup development environment ---
 echo "🔧 Setting up development environment..."
 
-# Install Node Version Manager (nvm)
+# Install Node Version Manager (nvm) and latest Node.js
 if [[ ! -d "$HOME/.nvm" ]]; then
     echo "📦 Installing Node Version Manager..."
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
     export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     nvm install --lts
+    nvm use --lts
+    echo "✅ Node.js LTS installed via nvm"
+else
+    echo "✅ NVM already installed"
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+fi
+
+# Verify Node.js and npm
+if command -v node &> /dev/null; then
+    echo "✅ Node.js version: $(node --version)"
+else
+    echo "❌ Node.js not found"
+fi
+
+if command -v npm &> /dev/null; then
+    echo "✅ npm version: $(npm --version)"
+    # Update npm to latest version
+    npm install -g npm@latest
+else
+    echo "❌ npm not found"
+fi
+
+# --- Install Rust ---
+echo "🦀 Installing Rust toolchain..."
+if ! command -v rustup &> /dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env"
+    echo "✅ Rust installed successfully"
+else
+    echo "✅ Rust already installed"
+    rustup update
 fi
 
 echo "✅ Linux setup complete!"
 echo "📝 You may need to restart your terminal or log out/in for all changes to take effect."
 echo "🔄 Run 'source ~/.bashrc' or 'source ~/.zshrc' to reload your shell configuration."
+echo "🔄 Run 'source ~/.cargo/env' to load Rust environment in current shell."

@@ -144,6 +144,33 @@ defaults write NSGlobalDomain InitialKeyRepeat -int 15
 # Restart Finder to apply changes
 killall Finder
 
+# --- Install Rust ---
+echo "🦀 Installing Rust toolchain..."
+if ! command -v rustup &> /dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env"
+    echo "✅ Rust installed successfully"
+else
+    echo "✅ Rust already installed"
+    rustup update
+fi
+
+# --- Verify Node.js and npm ---
+echo "🔍 Verifying Node.js and npm installation..."
+if command -v node &> /dev/null; then
+    echo "✅ Node.js version: $(node --version)"
+else
+    echo "❌ Node.js not found"
+fi
+
+if command -v npm &> /dev/null; then
+    echo "✅ npm version: $(npm --version)"
+    # Update npm to latest version
+    npm install -g npm@latest
+else
+    echo "❌ npm not found"
+fi
+
 # --- Install Oh My Zsh (optional) ---
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     echo "🐚 Installing Oh My Zsh..."
@@ -152,3 +179,4 @@ fi
 
 echo "✅ macOS setup complete!"
 echo "📝 You may need to restart some applications or log out/in for all changes to take effect."
+echo "🔄 Run 'source ~/.cargo/env' to load Rust environment in current shell."
